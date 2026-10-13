@@ -2,6 +2,14 @@
 session_start();
 require 'db.php';
 
+// Controleer of de gebruiker is ingelogd én of het een admin is
+if (!isset($_SESSION['klant_id']) || !isset($_SESSION['is_admin']) || $_SESSION['is_admin'] != 1) {
+    header("Location: login.php");
+    exit;
+}
+
+$melding = '';
+
 // Verwerk Toevoegen van een Tijdvak / Kalender
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actie_tijdvak'])) {
     $object_id = $_POST['object_id'];
@@ -50,8 +58,14 @@ $tijdvakken = $pdo->query("
     </style>
 </head>
 <body>
-    <h1>Beheerderspaneel (Admin CRUD)</h1>
-    <?php if (isset($melding)): ?><p style="color:green; font-weight:bold;"><?= $melding; ?></p><?php endif; ?>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1>Beheerderspaneel (Admin CRUD)</h1>
+        <a href="uitloggen.php" class="btn btn-danger btn-sm" style="background: #dc3545; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px;">Uitloggen</a>
+    </div>
+
+    <?php if ($melding): ?>
+        <p style="color:green; font-weight:bold;"><?= $melding; ?></p>
+    <?php endif; ?>
 
     <div class="grid">
         <!-- Object Toevoegen -->
@@ -85,17 +99,20 @@ $tijdvakken = $pdo->query("
     </div>
 
     <!-- Overzichten -->
-    <div class="card">
+    <div class="card" style="margin-bottom: 20px;">
         <h3>Klantenbestand (CRUD)</h3>
         <table>
             <tr><th>ID</th><th>Naam</th><th>E-mail</th><th>Geregistreerd Op</th></tr>
             <?php foreach ($klanten as $k): ?>
-                <tr><td><?= $k['id']; ?></td><td><?= htmlspecialchars($k['naam']); ?></td><td><?= htmlspecialchars($k['email']); ?></td><td><?= $k['aangemaakt_op']; ?></td></tr>
+                <tr>
+                    <td><?= $k['id']; ?></td>
+                    <td><?= htmlspecialchars($k['naam']); ?></td>
+                    <td><?= htmlspecialchars($k['email']); ?></td>
+                    <td><?= $k['aangemaakt_op'] ?? '-'; ?></td>
+                </tr>
             <?php endforeach; ?>
         </table>
     </div>
-
-    <br>
 
     <div class="card">
         <h3>Kalender & Beschikbaarheid (CRUD)</h3>
